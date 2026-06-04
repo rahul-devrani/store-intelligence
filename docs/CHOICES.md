@@ -1,72 +1,391 @@
-# CHOICES.md — Key Engineering Decisions
+# CHOICES.md — Engineering Trade-offs and Decision Log
 
-## Decision 1 — Detection Model: YOLOv8n + ByteTrack
-
-**Options considered:**
-- YOLOv8n (nano) — fastest, ~6ms/frame on CPU
-- YOLOv8s (small) — 2× slower, better accuracy on partial occlusions
-- RT-DETR — transformer-based, strong accuracy but 4× inference cost
-- MediaPipe Pose — good for single person, degrades with crowds
-
-**What AI suggested:** Claude suggested YOLOv8s as a better trade-off for the
-billing clip partial occlusion cases, noting that nano struggles when people are
->50% occluded by shelving.
-
-**What I chose and why:** YOLOv8n for this submission with `confidence=0.45`
-threshold. The key insight is that ByteTrack's Kalman filter recovers tracks through
-short occlusions (2-3 frames) without requiring the detector to fire. At the 5-frame
-skip rate used here, occlusion is mostly invisible to the tracker. If running on
-GPU in production, YOLOv8s is a drop-in upgrade (same API call).
-
-**Partial occlusion handling:** The `LocalTrackRepairer` stitches tracks that
-disappear for ≤2 seconds with matching position + bounding box size — this covers
-people stepping behind a display and re-emerging.
+This document records the major engineering decisions made while building the Store Intelligence platform. For each decision I describe the alternatives considered, AI-assisted recommendations, the final choice, and the reasoning behind it.
 
 ---
 
-## Decision 2 — Event Schema Design
+# Decision 1 — Detection Model Selection
 
-**Core question:** Should a visitor's ID be stable across cameras?
+## Problem
 
-**Options considered:**
-1. Per-camera visitor IDs, deduplicate at query time
-2. Global visitor IDs assigned at entry, inherited by Re-ID
-3. Probabilistic IDs that merge post-hoc
+The system must detect people reliably from retail CCTV footage while remaining lightweight enough to run on commodity hardware.
 
-**What AI suggested:** Option 3 with a post-hoc merge step using a Union-Find
-structure keyed on (camera_id, entry_timestamp, descriptor_similarity).
+The footage contains:
 
-**What I chose and why:** Option 2. The Re-ID engine assigns the same visitor_id
-when it detects the same person entering a new camera's FOV. This means the API
-layer never needs to deduplicate — `COUNT(DISTINCT visitor_id)` is always correct.
-The tradeoff is a false negative Re-ID (missed same-person match) creates a harmless
-slight overcount, whereas a false positive (two people merged) causes undercounting —
-which is the more misleading error. Threshold set conservatively at 0.82 cosine
-similarity for this reason.
+* Group entries
+* Partial occlusions
+* Crowded billing queues
+* Staff movement
+* Empty-store periods
+* Multiple camera viewpoints
 
-**Schema compliance:** All events include `event_id` (UUID v4), `timestamp`
-(ISO-8601 UTC), `confidence` (never suppressed), `session_seq` (monotonic counter
-per visitor), and `metadata.queue_depth` (null for non-billing events).
+The detector therefore needs both acceptable accuracy and practical inference speed.
 
 ---
 
-## Decision 3 — API Storage: SQLite in WAL Mode
+## Options Considered
 
-**Options considered:**
-- SQLite (WAL mode) — zero infra, file-based, concurrent reads
-- PostgreSQL — production-grade, needs a separate container + connection pool
-- DuckDB — excellent analytical queries, less battle-tested for write-heavy workloads
+### Option A — YOLOv8n
 
-**What AI suggested:** PostgreSQL for production readiness, noting SQLite has
-write serialisation that would bottleneck a high-ingest pipeline.
+Advantages:
 
-**What I chose and why:** SQLite in WAL mode. The challenge runs a single store
-pipeline feeding a single API instance — SQLite WAL handles this without contention.
-WAL mode specifically allows concurrent readers during writes, which matters here
-(pipeline writing, dashboard reading simultaneously). The DB_PATH is injected via
-environment variable, making it trivial to swap to PostgreSQL by changing the
-connection string in `database.py`. DuckDB was tempting for the analytical queries
-but its write path is less suited to the event-stream pattern.
+* Extremely fast
+* Small model size
+* Easy deployment
+* CPU friendly
 
-**Indices added:** `(store_id, timestamp)`, `(store_id, visitor_id)` on `raw_events`
-to keep the metric queries sub-10ms even with 100k+ events.
+Disadvantages:
+
+* Slightly weaker on heavy occlusion cases
+* Lower recall compared to larger models
+
+---
+
+### Option B — YOLOv8s
+
+Advantages:
+
+* Better recall
+* Stronger performance in crowded scenes
+
+Disadvantages:
+
+* Roughly 2× slower
+* Higher memory consumption
+
+---
+
+### Option C — RT-DETR
+
+Advantages:
+
+* Strong detection accuracy
+* Better transformer-based feature extraction
+
+Disadvantages:
+
+* Significantly slower
+* Less suitable for lightweight deployment
+
+---
+
+### Option D — MediaPipe-based approach
+
+Advantages:
+
+* Good for individual people
+
+Disadvantages:
+
+* Struggles with retail crowd scenarios
+* Not designed for dense multi-person tracking
+
+---
+
+## What AI Suggested
+
+Claude recommended YOLOv8s because billing-area footage contains several partial occlusion cases where people become temporarily hidden behind displays or other customers.
+
+The recommendation prioritised detection accuracy over inference speed.
+
+---
+
+## Final Choice
+
+### YOLOv8n + ByteTrack
+
+I selected YOLOv8n as the primary detector.
+
+The reason is that the challenge evaluates the full analytics pipeline rather than detector benchmark scores.
+
+Once a person is detected and assigned a track, ByteTrack is capable of maintaining that track through short-term occlusions without requiring the detector to fire every frame.
+
+The detector therefore acts mainly as a track initializer rather than the sole source of identity continuity.
+
+---
+
+## Additional Reliability Layer
+
+A custom LocalTrackRepairer was added.
+
+If a track disappears for ≤2 seconds and later reappears near the previous location with a similar bounding-box size, the track is repaired rather than creating a new visitor.
+
+This reduces:
+
+* False EXIT events
+* Duplicate ENTRY events
+* Re-identification failures
+
+---
+
+## Future Upgrade Path
+
+For production deployment:
+
+* GPU available → YOLOv8s
+* Multi-store deployment → YOLOv8m
+* High-density stores → RT-DETR evaluation
+
+The architecture intentionally isolates the detector so model replacement requires minimal code changes.
+
+---
+
+# Decision 2 — Event Schema Design
+
+## Problem
+
+All analytics depend on the event stream.
+
+The schema must support:
+
+* Footfall counting
+* Visitor sessions
+* Conversion funnels
+* Queue monitoring
+* Heatmaps
+* Re-entry detection
+* Anomaly detection
+
+while remaining easy to ingest and validate.
+
+---
+
+## Options Considered
+
+### Option A — Camera-local visitor IDs
+
+Each camera generates independent visitor identifiers.
+
+Advantages:
+
+* Simple implementation
+
+Disadvantages:
+
+* Expensive query-time deduplication
+* Incorrect funnel counts
+
+---
+
+### Option B — Global visitor IDs
+
+A visitor retains the same identifier across cameras.
+
+Advantages:
+
+* Simpler analytics
+* Correct session aggregation
+
+Disadvantages:
+
+* Requires cross-camera matching
+
+---
+
+### Option C — Probabilistic post-processing merge
+
+Merge visitor identities after ingestion.
+
+Advantages:
+
+* Flexible
+
+Disadvantages:
+
+* Higher complexity
+* Harder debugging
+* Delayed analytics
+
+---
+
+## What AI Suggested
+
+The AI recommendation was a Union-Find style post-processing merge system where visitors would be merged after ingestion based on similarity scores and timestamps.
+
+This approach reduces detector-side complexity but increases API complexity.
+
+---
+
+## Final Choice
+
+### Global Visitor IDs
+
+The Re-ID engine attempts to assign a single visitor_id across cameras.
+
+This allows:
+
+```text
+COUNT(DISTINCT visitor_id)
+```
+
+to remain valid throughout the analytics layer.
+
+The API never needs additional deduplication logic.
+
+---
+
+## Why This Matters
+
+The entire challenge revolves around conversion rate:
+
+```text
+Converted Visitors / Total Visitors
+```
+
+If the same person receives multiple IDs, conversion metrics become inflated.
+
+A conservative matching threshold was therefore preferred.
+
+False negatives slightly overcount visitors.
+
+False positives incorrectly merge different people.
+
+The second error is more harmful.
+
+---
+
+## Event Design Principles
+
+Every event includes:
+
+* event_id (UUIDv4)
+* store_id
+* camera_id
+* visitor_id
+* event_type
+* timestamp
+* confidence
+* is_staff
+* session_seq
+
+Confidence values are never suppressed.
+
+Low-confidence events are retained and exposed to downstream systems.
+
+This follows the principle that uncertainty should be represented, not hidden.
+
+---
+
+# Decision 3 — Storage Engine and API Architecture
+
+## Problem
+
+The analytics API must support:
+
+* Continuous event ingestion
+* Concurrent dashboard reads
+* Simple deployment
+* Docker-based execution
+* Challenge-scale workloads
+
+---
+
+## Options Considered
+
+### Option A — SQLite
+
+Advantages:
+
+* Zero infrastructure
+* Simple deployment
+* Reliable
+
+Disadvantages:
+
+* Single-writer limitation
+
+---
+
+### Option B — PostgreSQL
+
+Advantages:
+
+* Production-grade
+* Better write scalability
+
+Disadvantages:
+
+* Additional operational complexity
+
+---
+
+### Option C — DuckDB
+
+Advantages:
+
+* Excellent analytical queries
+
+Disadvantages:
+
+* Less suited for continuous event ingestion
+
+---
+
+## What AI Suggested
+
+AI recommended PostgreSQL because production retail deployments often involve many stores simultaneously writing events.
+
+This is the correct recommendation for large-scale systems.
+
+---
+
+## Final Choice
+
+### SQLite in WAL Mode
+
+For challenge constraints, SQLite WAL provides the best trade-off.
+
+Benefits:
+
+* No external database container
+* Easy local development
+* Concurrent reads during writes
+* Minimal setup
+
+The pipeline can ingest events while dashboards and API queries execute simultaneously.
+
+---
+
+## Performance Optimisations
+
+Indexes added:
+
+```sql
+(store_id, timestamp)
+
+(store_id, visitor_id)
+
+(event_id)
+```
+
+These keep analytics queries responsive even as event volume grows.
+
+---
+
+## Production Migration Strategy
+
+The database layer is isolated behind a small access layer.
+
+Future migration path:
+
+```text
+SQLite
+   ↓
+PostgreSQL
+   ↓
+Kafka + PostgreSQL
+   ↓
+Kafka + ClickHouse
+```
+
+without changing endpoint contracts.
+
+---
+
+# Summary
+
+The guiding principle throughout the project was:
+
+> Prefer simple, explainable, production-aware solutions over unnecessarily complex architectures.
+
+AI was used extensively for evaluating alternatives and identifying trade-offs, but final decisions were made based on deployment simplicity, challenge requirements, observability, and maintainability.
