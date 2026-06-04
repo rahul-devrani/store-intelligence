@@ -1,0 +1,22 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: store_intelligence_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data        # persists SQLite DB and store_layout.json
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DB_PATH=/app/data/store_intelligence.db
+      - SALES_CSV_PATH=/app/data/sales_data.csv
+      - API_BASE_URL=http://localhost:8000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

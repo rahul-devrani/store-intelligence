@@ -1,0 +1,133 @@
+Folder PATH listing
+Volume serial number is 000000BA 3245:B193
+C:.
+¦   cd
+¦   dashboard.py
+¦   docker
+¦   docker-compose.yml
+¦   Dockerfile
+¦   README.md
+¦   requirements.txt
+¦   structure.txt
+¦   uvicorn
+¦   
++---.pytest_cache
+¦   ¦   .gitignore
+¦   ¦   CACHEDIR.TAG
+¦   ¦   README.md
+¦   ¦   
+¦   +---v
+¦       +---cache
+¦               lastfailed
+¦               nodeids
+¦               stepwise
+¦               
++---app
+¦   ¦   anomalies.py
+¦   ¦   config.py
+¦   ¦   database.py
+¦   ¦   funnel.py
+¦   ¦   health.py
+¦   ¦   heatmap.py
+¦   ¦   ingestion.py
+¦   ¦   main.py
+¦   ¦   metrics.py
+¦   ¦   models.py
+¦   ¦   sessions.py
+¦   ¦   utils.py
+¦   ¦   __init__.py
+¦   ¦   
+¦   +---__pycache__
+¦           anomalies.cpython-313.pyc
+¦           config.cpython-313.pyc
+¦           database.cpython-313.pyc
+¦           funnel.cpython-313.pyc
+¦           health.cpython-313.pyc
+¦           ingestion.cpython-313.pyc
+¦           main.cpython-313.pyc
+¦           metrics.cpython-313.pyc
+¦           models.cpython-313.pyc
+¦           __init__.cpython-313.pyc
+¦           
++---data
+¦   ¦   pos_transactions.csv
+¦   ¦   store 2.png
+¦   ¦   store1.png
+¦   ¦   store_intelligence.db
+¦   ¦   store_intelligence.db-shm
+¦   ¦   store_intelligence.db-wal
+¦   ¦   store_layout.json
+¦   ¦   
+¦   +---clips
+¦       +---STORE_BLR_001
+¦       ¦   +---CAM_1
+¦       ¦   ¦       CAM 1 - zone.mp4
+¦       ¦   ¦       
+¦       ¦   +---CAM_2
+¦       ¦   ¦       CAM 2 - zone.mp4
+¦       ¦   ¦       
+¦       ¦   +---CAM_3
+¦       ¦   ¦       CAM 3 - entry.mp4
+¦       ¦   ¦       
+¦       ¦   +---CAM_5
+¦       ¦           CAM 5 - billing.mp4
+¦       ¦           
+¦       +---STORE_BLR_002
+¦           +---CAM_1
+¦           ¦       entry 1.mp4
+¦           ¦       
+¦           +---CAM_2
+¦           ¦       entry 2.mp4
+¦           ¦       
+¦           +---CAM_3
+¦           ¦       zone.mp4
+¦           ¦       
+¦           +---CAM_4
+¦                   billing_area.mp4
+¦                   
++---docs
+¦       CHOICES.md
+¦       DESIGN.md
+¦       
++---frames
+¦       billing_area.jpg
+¦       CAM 1 - zone.jpg
+¦       CAM 2 - zone.jpg
+¦       CAM 3 - entry.jpg
+¦       CAM 5 - billing.jpg
+¦       entry 1.jpg
+¦       entry 2.jpg
+¦       zone.jpg
+¦       
++---outputs
+¦   ¦   events.jsonl
+¦   ¦   heatmap_cache.json
+¦   ¦   
+¦   +---logs
++---pipeline
+¦       detect.py
+¦       emit.py
+¦       reid.py
+¦       run.sh
+¦       tracker.py
+¦       zone_mapper.py
+¦       __init__.py
+¦       
++---tests
+    ¦   test_anomalies.py
+    ¦   test_api.py
+    ¦   test_funnel.py
+    ¦   test_health.py
+    ¦   test_ingestion.py
+    ¦   test_metrics.py
+    ¦   __init__.py
+    ¦   
+    +---__pycache__
+            test_anomalies.cpython-313-pytest-8.3.4.pyc
+            test_api.cpython-313-pytest-8.3.4.pyc
+            test_funnel.cpython-313-pytest-8.3.4.pyc
+            test_health.cpython-313-pytest-8.3.4.pyc
+            test_ingestion.cpython-313-pytest-8.3.4.pyc
+            test_metrics.cpython-313-pytest-8.3.4.pyc
+            __init__.cpython-313.pyc
+            
