@@ -174,7 +174,7 @@ store-intelligence/
 ├── requirements.txt              # Standard Python Library Version Tree
 └── README.md                     # Deep System Blueprint Manual
 
----
+```
 
 ## Quick Start
 
