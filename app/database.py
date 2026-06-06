@@ -3,12 +3,18 @@ import os
 
 
 
+# def get_db_path():
+#     return os.environ.get(
+#         "DB_PATH",
+#         "/app/data/store_intelligence.db"
+#     )
+
+
 def get_db_path():
     return os.environ.get(
         "DB_PATH",
-        "/app/data/store_intelligence.db"
+        "data/store_intelligence.db"
     )
-
 
 def init_db():
     # os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)

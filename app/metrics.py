@@ -81,22 +81,17 @@ def _load_pos_transactions(store_id: str) -> list:
                 ts_sec = _parse_iso_to_seconds(ts_str)
                 if ts_sec is None:
                     continue
+
                 try:
-
-                raw_val = row.get("basket_value_inr") or row.get("total_amount", 0)
-                basket = float(raw_val or 0)
-
-                
-                if not ts_str:
-                    order_date = row.get("order_date", "").strip()
-                    order_time = row.get("order_time", "").strip()
-                    if order_date and order_time:
-                        ts_str = f"{order_date}T{order_time}Z"
-
-
-                except ValueError:
+                    raw_val = row.get("basket_value_inr") or row.get("total_amount", 0)
+                    basket = float(raw_val or 0)
+                except (ValueError, TypeError):
                     basket = 0.0
-                transactions.append({"timestamp_seconds": ts_sec, "basket_value": basket})
+
+                transactions.append({
+                    "timestamp_seconds": ts_sec,
+                    "basket_value": basket
+                })
     except Exception as e:
         print(f"[Metrics] POS file read error: {e}")
     return transactions
@@ -110,7 +105,7 @@ def get_pos_analytics(
     """
     Correlate POS transactions with CCTV billing zone visits.
 
-    Logic: A visitor who was in the BILLING zone within POS_CORRELATION_WINDOW_SEC
+    Logic: A visitor who was in the cash counter zone within POS_CORRELATION_WINDOW_SEC
     before a transaction timestamp is counted as a converted visitor.
 
     Returns: (status, total_revenue, converted_visitor_count)
@@ -131,7 +126,7 @@ def get_pos_analytics(
         SELECT DISTINCT visitor_id, timestamp
         FROM raw_events
         WHERE store_id = ?
-          AND zone_id = 'BILLING'
+          AND zone_id = 'CASH_COUNTER'
           AND is_staff = 0
           AND event_type IN ('ZONE_EXIT', 'ZONE_ENTER', 'ZONE_DWELL', 'BILLING_QUEUE_JOIN')
         ORDER BY timestamp
@@ -173,11 +168,11 @@ class MetricsCalculator:
         """, (store_id,))
         footfall = cur.fetchone()["cnt"] or 0
 
-        # Checkout visitors: unique non-staff who reached BILLING 
+        # Checkout visitors: unique non-staff who reached CASH COUNTER
         cur.execute("""
             SELECT COUNT(DISTINCT visitor_id) AS cnt
             FROM raw_events
-            WHERE store_id = ? AND zone_id = 'BILLING' AND is_staff = 0
+            WHERE store_id = ? AND zone_id = 'CASH_COUNTER' AND is_staff = 0
         """, (store_id,))
         checkout_visitors = cur.fetchone()["cnt"] or 0
 
@@ -185,7 +180,7 @@ class MetricsCalculator:
         cur.execute("""
             SELECT AVG(dwell_ms) AS avg_dwell
             FROM raw_events
-            WHERE store_id = ? AND zone_id = 'BILLING'
+             WHERE store_id = ? AND zone_id = 'CASH_COUNTER'
               AND is_staff = 0 AND dwell_ms > 0
         """, (store_id,))
         row = cur.fetchone()
@@ -263,7 +258,11 @@ class MetricsCalculator:
             conversion_method = "temporal_overlap"
             conversion_note = None
         elif pos_status == "APPROXIMATION" and footfall > 0 and converted_count > 0:
-            conversion_rate = round((converted_count / footfall) * 100, 1)
+            # conversion_rate = round((converted_count / footfall) * 100, 1)
+            conversion_rate = round(
+                        min((converted_count / footfall) * 100, 100),
+                                1
+                            )
             conversion_method = "approximation"
             conversion_note = (
                 "POS order count divided by CCTV footfall. "

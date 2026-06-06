@@ -86,17 +86,16 @@ class AnomalyDetector:
                 })
         
 
-        # Billing queue spike 
+        # Billing queue spike
         cur.execute("""
             SELECT MAX(queue_depth) AS max_q, AVG(queue_depth) AS avg_q
             FROM raw_events
             WHERE store_id = ? AND queue_depth IS NOT NULL
         """, (store_id,))
-        # row = cur.fetchone()
-        # if (row is not None and row["max_q"] is not None and row["max_q"] > QUEUE_SPIKE_THRESHOLD):
-            row = cur.fetchone()
-            if row is not None and row["max_q"] is not None and row["max_q"] > QUEUE_SPIKE_THRESHOLD:
-           
+
+        row = cur.fetchone()
+
+        if row is not None and row["max_q"] is not None and row["max_q"] > QUEUE_SPIKE_THRESHOLD:
             alarms.append({
                 "anomaly_type": "BILLING_QUEUE_SPIKE",
                 "severity": "WARN",

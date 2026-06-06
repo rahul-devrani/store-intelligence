@@ -1,6 +1,11 @@
 fastapi==0.110.0
 uvicorn==0.28.0
+
 ultralytics==8.2.103
+
+torch==2.2.2
+torchvision==0.17.2
+
 pandas==2.2.1
 opencv-python-headless==4.9.0.80
 numpy==1.26.4
@@ -10,6 +15,7 @@ requests==2.31.0
 httpx==0.27.0
 pytest==8.1.1
 pytest-cov==4.1.0
+
 streamlit>=1.32.0
 Pillow>=10.0.0
 matplotlib>=3.8.0

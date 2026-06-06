@@ -5,6 +5,12 @@ from typing import Any, Dict, List
 
 import requests
 
+import json
+from pathlib import Path
+
+EVENT_LOG = Path("outputs/logs/events.jsonl")
+EVENT_LOG.parent.mkdir(parents=True, exist_ok=True)
+
 API_BASE = os.environ.get("API_BASE_URL", "http://localhost:8000")
 API_INGEST_URL = f"{API_BASE}/events/ingest"
 API_HEATMAP_URL = f"{API_BASE}/events/heatmap"
@@ -23,7 +29,12 @@ class IngestBatchEmitter:
         self._buffer: List[Dict[str, Any]] = []
 
     def queue_event(self, event: Dict[str, Any]):
+
+        with open(EVENT_LOG, "a", encoding="utf-8") as f:
+            f.write(json.dumps(event) + "\n")
+
         self._buffer.append(event)
+
         if len(self._buffer) >= self.batch_size:
             self.flush()
 

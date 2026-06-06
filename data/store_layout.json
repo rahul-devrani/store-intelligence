@@ -18,128 +18,125 @@
     }
   },
 
-  "STORE_BLR_001": {
-    "store_id": "STORE_BLR_001",
-    "store_name": "Purplle — Indiranagar",
-    "floor_plan_png": "store1.png",
-    "cameras": {
-      "CAM_1": {
-        "type": "floor",
-        "description": "Skincare wall — top-left brand bay (Farmstay / TFS / Minimalist / Aqualogi / Foxtal / JC)",
-        "zones": {
-          "SKINCARE_WALL": {
-            "polygon": [
-              [0.0, 0.0], [0.58, 0.0], [0.58, 0.22], [0.0, 0.22]
-            ],
-            "description": "Top wall brand shelves: Salm, TFS, Minimalist, Aqualogi, Foxtal, JC"
-          },
-          "FOH_LEFT": {
-            "polygon": [
-              [0.0, 0.22], [0.58, 0.22], [0.58, 0.75], [0.0, 0.75]
-            ],
-            "description": "Left half of FOH walking area visible from CAM_1"
-          },
-          "FRAGRANCE_NAIL_UNIT": {
-            "polygon": [
-              [0.27, 0.32], [0.42, 0.32], [0.42, 0.65], [0.27, 0.65]
-            ],
-            "description": "Fragrance + Nail counter island (center-left floor fixture)"
-          }
-        },
-        "tripwire": null,
-        "_tripwire_note": "Removed: tripwires are only valid on entry cameras (CAM_3). Floor cameras do not count footfall crossings."
+
+"STORE_BLR_001": {
+  "store_id": "STORE_BLR_001",
+  "store_name": "Purplle - Indiranagar",
+  "floor_plan_png": "store1.png",
+
+  "cameras": {
+
+    "CAM_1": {
+      "type": "floor",
+      "description": "Skincare Wall Camera",
+
+      "zones": {
+        "CAM_1_FOV": {
+          "polygon": [
+            [0.10,0.28],
+            [0.90,0.28],
+            [0.99,0.96],
+            [0.07,0.96]
+          ]
+        }
       },
 
-      "CAM_2": {
-        "type": "floor",
-        "description": "Cosmetics/Makeup floor — center-right (Loreal, Mars, Lakme, Maybelline, Faces Canada, Swiss Beauty)",
-        "zones": {
-          "COSMETICS_WALL": {
-            "polygon": [
-              [0.42, 0.0], [1.0, 0.0], [1.0, 0.22], [0.42, 0.22]
-            ],
-            "description": "Bottom wall brand bays: Facia, Mars+Nybae, Mens, Loreal, Beaut — and top visible wall: Loreal, Alps, 6Mars, Swiss Beauty, Lakme, Faces Canada, Maybelline"
-          },
-          "MAKEUP_UNIT": {
-            "polygon": [
-              [0.46, 0.28], [0.72, 0.28], [0.72, 0.72], [0.46, 0.72]
-            ],
-            "description": "Makeup Unit island — double chair unit (900mm x 900mm per plan)"
-          },
-          "FOH_RIGHT": {
-            "polygon": [
-              [0.15, 0.22], [0.85, 0.22], [0.85, 0.80], [0.15, 0.80]
-            ],
-            "description": "Right half of FOH walking area visible from CAM_2"
-          }
-        },
-        "tripwire": null,
-        "_tripwire_note": "Removed: tripwires are only valid on entry cameras (CAM_3). Floor cameras do not count footfall crossings."
-      },
-
-      "CAM_3": {
-        "type": "entry",
-        "description": "Entrance — glass door, Purplle branded fascia, top-down fisheye. Tripwire = door threshold.",
-        "zones": {
-          "ENTRANCE": {
-            "polygon": [
-              [0.30, 0.15], [0.65, 0.10], [0.68, 0.60], [0.28, 0.62]
-            ],
-            "description": "Entrance threshold zone (skewed top-down trapezoid due to fisheye lens)"
-          },
-          "LOBBY": {
-            "polygon": [
-              [0.05, 0.60], [0.95, 0.60], [0.95, 1.0], [0.05, 1.0]
-            ],
-            "description": "Just-inside lobby area — first ~1.5m after entry door"
-          }
-        },
-        "tripwire": [[0.28, 0.38], [0.68, 0.35]],
-        "tripwire_direction": "outside_to_inside"
-      },
-
-      "CAM_5": {
-        "type": "billing",
-        "description": "Cash Counter / Billing — right wall. Also captures ACCESS corner (accessories display).",
-        "zones": {
-          "CASH_COUNTER": {
-            "polygon": [
-              [0.15, 0.22], [0.75, 0.22], [0.75, 0.72], [0.15, 0.72]
-            ],
-            "description": "POS desk + barcode scanner area. Staff always present here."
-          },
-          "BILLING": {
-            "polygon": [
-              [0.15, 0.22], [0.75, 0.22], [0.75, 0.72], [0.15, 0.72]
-            ],
-            "description": "Alias of CASH_COUNTER used by ingestion pipeline for funnel stage 3"
-          },
-          "ACCESS_CORNER": {
-            "polygon": [
-              [0.75, 0.50], [1.0, 0.50], [1.0, 1.0], [0.75, 1.0]
-            ],
-            "description": "ACCESS display — accessories / impulse buys corner (teal box on floor plan)"
-          },
-          "BACKROOM": {
-            "polygon": [
-              [0.0, 0.85], [1.0, 0.85], [1.0, 1.0], [0.0, 1.0]
-            ],
-            "description": "Narrow staff-only corridor behind Cash Counter"
-          }
-        },
-        "tripwire": null
-      }
+      "tripwire": null
     },
 
-    "anomaly_config": {
-      "QUEUE_SPIKE_THRESHOLD": 6,
-      "DEAD_ZONE_WINDOW_SEC": 1800,
-      "STALE_FEED_LAG_SEC": 600,
-      "CONVERSION_DROP_THRESHOLD": 0.5
+    "CAM_2": {
+      "type": "floor",
+      "description": "Cosmetics Wall Camera",
+
+      "zones": {
+        "CAM_2_FOV": {
+          "polygon": [
+            [0.16,0.22],
+            [0.88,0.22],
+            [1.00,0.95],
+            [0.14,0.95]
+          ]
+        }
+      },
+
+      "tripwire": null
+    },
+
+    "CAM_3": {
+      "type": "entry",
+      "description": "Entrance Camera",
+
+      "zones": {
+
+ "ENTRANCE": {
+  "polygon": [
+    [0.35,0.20],
+    [0.65,0.20],
+    [0.72,0.70],
+    [0.32,0.70]
+  ]
+}
+
+      },
+
+      "tripwire": [
+        [0.00,0.36],
+        [1.00,0.36]
+      ]
+    },
+
+    "CAM_5": {
+      "type": "billing",
+      "description": "Billing + Backroom Camera",
+
+      "zones": {
+"QUEUE_AREA": {
+  "polygon": [
+    [0.00,0.18],
+    [0.74,0.18],
+    [0.74,0.48],
+    [0.00,0.48]
+  ]
+}
+        
+        ,
+
+        "CASH_COUNTER": {
+          "polygon": [
+            [0.20,0.20],
+            [0.48,0.20],
+            [0.48,0.85],
+            [0.20,0.85]
+          ]
+        },
+
+        "BACKROOM": {
+          "polygon": [
+            [0.48,0.00],
+            [0.82,0.00],
+            [0.82,0.52],
+            [0.48,0.52]
+          ]
+        }
+
+      },
+
+      "tripwire": null
     }
+
   },
 
- "STORE_BLR_002": {
+  "anomaly_config": {
+    "QUEUE_SPIKE_THRESHOLD": 6,
+    "DEAD_ZONE_WINDOW_SEC": 1800,
+    "STALE_FEED_LAG_SEC": 600,
+    "CONVERSION_DROP_THRESHOLD": 0.5
+  }
+}
+
+,
+
+"STORE_BLR_002": {
   "store_id": "STORE_BLR_002",
   "store_name": "Purplle Brigade Road",
   "floor_plan_png": "store2.png",
@@ -148,142 +145,117 @@
 
     "CAM_1": {
       "type": "entry",
-      "description": "Main Entrance Camera 1",
+      "description": "Main Entrance",
+
       "zones": {
+
         "ENTRANCE": {
           "polygon": [
-            [0.35, 0.82],
-            [0.65, 0.82],
-            [0.65, 1.00],
-            [0.35, 1.00]
-          ],
-          "description": "Main customer entry gate"
+            [0.15,0.45],
+            [0.85,0.45],
+            [0.85,0.80],
+            [0.15,0.80]
+          ]
         },
+
         "LOBBY": {
           "polygon": [
-            [0.15, 0.65],
-            [0.85, 0.65],
-            [0.85, 0.82],
-            [0.15, 0.82]
-          ],
-          "description": "Immediate area after entry"
+            [0.10,0.80],
+            [0.90,0.80],
+            [0.90,1.00],
+            [0.10,1.00]
+          ]
         }
+
       },
-      "tripwire": {
-        "line": [
-          [0.30, 0.80],
-          [0.70, 0.80]
-        ]
-      }
+
+      "tripwire": [
+        [0.15,0.55],
+        [0.85,0.55]
+      ]
     },
 
     "CAM_2": {
       "type": "entry",
-      "description": "Secondary Entrance Camera",
+      "description": "Secondary Entrance",
+
       "zones": {
+
         "ENTRANCE": {
           "polygon": [
-            [0.30, 0.75],
-            [0.70, 0.75],
-            [0.70, 1.00],
-            [0.30, 1.00]
-          ],
-          "description": "Secondary view of entrance"
+            [0.15,0.45],
+            [0.85,0.45],
+            [0.85,0.80],
+            [0.15,0.80]
+          ]
+        },
+
+        "LOBBY": {
+          "polygon": [
+            [0.10,0.80],
+            [0.90,0.80],
+            [0.90,1.00],
+            [0.10,1.00]
+          ]
         }
+
       },
-      "tripwire": {
-        "line": [
-          [0.30, 0.75],
-          [0.70, 0.75]
-        ]
-      }
+
+      "tripwire": [
+        [0.15,0.55],
+        [0.85,0.55]
+      ]
     },
 
     "CAM_3": {
       "type": "floor",
-      "description": "Main Shopping Floor",
+      "description": "Shopping Floor",
 
       "zones": {
 
-        "FOH": {
+        "CENTER_FLOOR": {
           "polygon": [
-            [0.05, 0.42],
-            [0.95, 0.42],
-            [0.95, 0.85],
-            [0.05, 0.85]
-          ],
-          "description": "Front of House"
-        },
-
-        "MAKEUP_UNIT": {
-          "polygon": [
-            [0.58, 0.55],
-            [0.80, 0.55],
-            [0.80, 0.80],
-            [0.58, 0.80]
-          ],
-          "description": "Makeup tables"
-        },
-
-        "GONDOLA_ZONE": {
-          "polygon": [
-            [0.15, 0.55],
-            [0.50, 0.55],
-            [0.50, 0.85],
-            [0.15, 0.85]
-          ],
-          "description": "Center gondola fixtures"
-        },
-
-        "LEFT_WALL_UNITS": {
-          "polygon": [
-            [0.00, 0.30],
-            [0.14, 0.30],
-            [0.14, 0.88],
-            [0.00, 0.88]
-          ],
-          "description": "Wall Units 1 to 6"
-        },
-
-        "RIGHT_WALL_UNITS": {
-          "polygon": [
-            [0.86, 0.30],
-            [1.00, 0.30],
-            [1.00, 0.88],
-            [0.86, 0.88]
-          ],
-          "description": "Wall Units 13 to 18"
+            [0.05,0.05],
+            [0.95,0.05],
+            [0.95,1.00],
+            [0.05,1.00]
+          ]
         }
-      }
+
+      },
+
+      "tripwire": null
     },
 
     "CAM_4": {
       "type": "billing",
-      "description": "Cash Counter Billing Area",
+      "description": "Billing Counter",
 
       "zones": {
 
-        "CASH_COUNTER": {
+        "QUEUE_AREA": {
           "polygon": [
-            [0.42, 0.37],
-            [0.65, 0.37],
-            [0.65, 0.48],
-            [0.42, 0.48]
-          ],
-          "description": "Billing desk"
+            [0.00,0.20],
+            [1.00,0.20],
+            [1.00,1.00],
+            [0.00,1.00]
+          ]
         },
 
-        "BILLING": {
+        "CASH_COUNTER": {
           "polygon": [
-            [0.42, 0.37],
-            [0.65, 0.37],
-            [0.65, 0.48],
-            [0.42, 0.48]
-          ],
-          "description": "Purchase completion area"
+            [0.25,0.30],
+            [0.75,0.30],
+            [0.75,0.82],
+            [0.25,0.82]
+          ]
         }
-      }
+
+      },
+
+      "tripwire": null
     }
+
   },
 
   "anomaly_config": {
@@ -292,4 +264,6 @@
     "STALE_FEED_LAG_SEC": 600,
     "CONVERSION_DROP_THRESHOLD": 0.5
   }
-}}
+}
+
+}

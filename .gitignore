@@ -1,4 +1,70 @@
-__pycache__/ 
-*.pyc 
-.env 
-*.mp4 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Env
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+logs/
+
+# Videos
+*.mp4
+*.avi
+*.mov
+*.mkv
+
+# Models
+*.pt
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-data/
+
+# Cache
+.pytest_cache/
+.mypy_cache/
+
+# Temporary
+temp/
+tmp/
+
+# Database backups
+*.db-journal
+
+# Generated frames
+frames/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Videos
+*.mp4
+*.avi
+*.mov
+*.mkv
+
+# Models
+*.pt
+
+# Debug
+store2_verify/
+debug_polygons.py
+verify_store2.py
+extract_frames.py
+
+# Python
+venv/
+__pycache__/

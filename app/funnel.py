@@ -25,7 +25,12 @@ class FunnelCalculator:
             SELECT COUNT(DISTINCT visitor_id) AS cnt
             FROM raw_events
             WHERE store_id = ?
-              AND zone_id NOT IN ('BILLING', 'BACKROOM', 'ENTRANCE')
+              AND zone_id NOT IN (
+'CASH_COUNTER',
+'QUEUE_AREA',
+'BACKROOM',
+'ENTRANCE'
+)
               AND zone_id IS NOT NULL
               AND dwell_ms >= 15000
               AND is_staff = 0
@@ -36,7 +41,7 @@ class FunnelCalculator:
         cur.execute("""
             SELECT COUNT(DISTINCT visitor_id) AS cnt
             FROM raw_events
-            WHERE store_id = ? AND zone_id = 'BILLING' AND is_staff = 0
+            WHERE store_id = ? AND zone_id = 'CASH_COUNTER' AND is_staff = 0
         """, (store_id,))
         stage_3 = cur.fetchone()["cnt"] or 0
 

@@ -49,6 +49,7 @@ class StoreStreamEngine:
         self.zone_entry_ts: Dict[str, float] = {}
         self.completed_visits: Dict[str, float] = {}
         self.left_billing_ts: Dict[str, float] = {}
+        self.last_timestamp = 0.0
 
         self.past_positions: Dict[int, Tuple[float, float, float]] = {}
         self.staff_votes: Dict[int, list] = {}
@@ -231,7 +232,7 @@ class StoreStreamEngine:
                 tripwire_line = LineString([p1, p2])
                 direction_vec = np.array([0.0, 1.0])
 
-        billing_poly: Optional[Polygon] = polygons.get("BILLING")
+        billing_poly: Optional[Polygon] = polygons.get("QUEUE_AREA")
         frame_idx = 0
 
         while cap.isOpened():
@@ -245,6 +246,7 @@ class StoreStreamEngine:
 
             ts = frame_idx / fps
             frame_dt = FRAME_SKIP / fps
+            self.last_timestamp = ts
 
             results = self.model.track(
                 frame, persist=True, classes=[0],
@@ -304,9 +306,9 @@ class StoreStreamEngine:
                             break
 
                     # Track staff-zone dwell and billing dwell
-                    if matched_zone in ("BILLING", "BACKROOM"):
+                    if matched_zone in ("CASH_COUNTER", "BACKROOM"):
                         self.staff_zone_dwell[tid] = self.staff_zone_dwell.get(tid, 0.0) + frame_dt
-                    if matched_zone == "BILLING":
+                    if matched_zone == "CASH_COUNTER":
                         self.billing_dwell[tid] = self.billing_dwell.get(tid, 0.0) + frame_dt
 
                     # Count distinct backroom entries
@@ -409,10 +411,10 @@ class StoreStreamEngine:
                                 matched_zone, 0, is_staff, conf, queue_depth,
                                 sku_zone=sku_map.get(matched_zone),
                             )
-                            if matched_zone == "BILLING" and queue_depth > 0:
+                            if matched_zone in ("CASH_COUNTER", "QUEUE_AREA") and queue_depth > 0:
                                 self._emit(
                                     camera_id, visitor_id, "BILLING_QUEUE_JOIN", ts,
-                                    "BILLING", 0, is_staff, conf, queue_depth,
+                                    "CASH_COUNTER", 0, is_staff, conf, queue_depth,
                                 )
 
                     else:
@@ -428,8 +430,8 @@ class StoreStreamEngine:
                                     camera_id, visitor_id, "ZONE_EXIT", ts,
                                     current_zone, dwell_ms, is_staff, conf, queue_depth,
                                 )
-                                if current_zone == "BILLING":
-                                    self.left_billing_ts[visitor_id] = ts
+                            if current_zone in ("CASH_COUNTER", "QUEUE_AREA"):
+                                self.left_billing_ts[visitor_id] = ts
 
                             self.active_zones[visitor_id] = matched_zone
                             if matched_zone:
@@ -439,10 +441,10 @@ class StoreStreamEngine:
                                     matched_zone, 0, is_staff, conf, queue_depth,
                                     sku_zone=sku_map.get(matched_zone),
                                 )
-                                if matched_zone == "BILLING" and queue_depth > 0:
+                                if matched_zone in ("CASH_COUNTER", "QUEUE_AREA") and queue_depth > 0:                                    
                                     self._emit(
                                         camera_id, visitor_id, "BILLING_QUEUE_JOIN", ts,
-                                        "BILLING", 0, is_staff, conf, queue_depth,
+                                        "CASH_COUNTER", 0, is_staff, conf, queue_depth,
                                     )
                         else:
                             # Continued dwell — emit ZONE_DWELL every 30 s
@@ -460,10 +462,10 @@ class StoreStreamEngine:
                     # Billing queue abandonment detection
                     if visitor_id in self.left_billing_ts:
                         elapsed = ts - self.left_billing_ts[visitor_id]
-                        if elapsed >= BILLING_ABANDON_WINDOW_SEC and matched_zone != "BILLING":
+                        if elapsed >= BILLING_ABANDON_WINDOW_SEC and matched_zone not in ("CASH_COUNTER","QUEUE_AREA"):                            
                             self._emit(
                                 camera_id, visitor_id, "BILLING_QUEUE_ABANDON", ts,
-                                "BILLING", 0, is_staff, conf, queue_depth,
+                                "CASH_COUNTER", 0, is_staff, conf, queue_depth,
                             )
                             del self.left_billing_ts[visitor_id]
 
@@ -472,7 +474,10 @@ class StoreStreamEngine:
             for lost_tid in prev_active - active_ids:
                 px, py, _ = self.past_positions.get(lost_tid, (0.0, 0.0, ts))
                 self.repairer.mark_lost(lost_tid, ts, (px, py))
+                visitor_id = self.repairer.track_to_visitor.get(lost_tid)
 
+                if visitor_id:
+                    self.completed_visits[visitor_id] = ts
             self.repairer.purge_expired(ts)
             self.reid.purge_expired(ts)
 
@@ -482,38 +487,16 @@ class StoreStreamEngine:
 
             frame_idx += 1
 
-        # End of video :  emit EXIT for all active visitors
+        # End of video : emit EXIT for all active visitors
+
+
         exit_ts = frame_idx / fps
-        # last_frame = frame if "frame" in dir() else np.zeros((int(fh), int(fw), 3), np.uint8)
-        if "frame" in dir() and frame is not None:
-            last_frame = frame
-        else:
-            last_frame = np.zeros((int(fh), int(fw), 3), dtype=np.uint8)
-        for visitor_id, current_zone in list(self.active_zones.items()):
-            entry_key = f"{visitor_id}_{current_zone}"
-            entry_t = self.zone_entry_ts.get(entry_key, exit_ts)
-            dwell_ms = int((exit_ts - entry_t) * 1000)
 
-            if current_zone:
-                self._emit(camera_id, visitor_id, "ZONE_EXIT", exit_ts, current_zone, dwell_ms, False, 1.0, 0)
+        # if "frame" in locals() and frame is not None:
+        #     last_frame = frame
+        # else:
+        #     last_frame = np.zeros((int(fh), int(fw), 3), dtype=np.uint8)
 
-            self._emit(camera_id, visitor_id, "EXIT", exit_ts, None, dwell_ms, False, 1.0, 0)
-            guard_key = f"{self.store_id}_{visitor_id}"
-            if guard_key in self._entry_guard:
-                self._entry_guard.remove(guard_key)
-            self.completed_visits[visitor_id] = exit_ts
-
-            for tid, vid in self.repairer.track_to_visitor.items():
-                if vid == visitor_id and tid in self.past_positions:
-                    px, py, _ = self.past_positions[tid]
-                    bbox = self.repairer.track_bboxes.get(tid, (80.0, 160.0))
-                    desc_box = np.array([
-                        max(0, px - bbox[0] / 2), max(0, py - bbox[1]),
-                        px + bbox[0] / 2, py,
-                    ])
-                    desc = CrossCameraReIDEngine.build_descriptor(last_frame, desc_box)
-                    self.reid.register_exit(visitor_id, exit_ts, desc)
-                    break
 
         self._flush_heatmap()
         self.emitter.flush()
@@ -528,3 +511,49 @@ class StoreStreamEngine:
         ]
         self.emitter.flush_heatmap(self.store_id, bins)
         self.heatmap_bins.clear()
+
+
+    def finalize_store_session(self):
+
+        final_ts = self.last_timestamp
+
+        for visitor_id, current_zone in list(self.active_zones.items()):
+
+            if current_zone:
+
+                entry_key = f"{visitor_id}_{current_zone}"
+                entry_t = self.zone_entry_ts.get(entry_key, final_ts)
+
+                dwell_ms = int((final_ts - entry_t) * 1000)
+
+                self._emit(
+                    camera_id="STORE",
+                    visitor_id=visitor_id,
+                    event_type="ZONE_EXIT",
+                    timestamp=final_ts,
+                    zone_id=current_zone,
+                    dwell_ms=dwell_ms,
+                    is_staff=False,
+                    conf=1.0,
+                    queue_depth=0,
+                )
+
+            self._emit(
+                camera_id="STORE",
+                visitor_id=visitor_id,
+                event_type="EXIT",
+                timestamp=final_ts,
+                zone_id=None,
+                dwell_ms=0,
+                is_staff=False,
+                conf=1.0,
+                queue_depth=0,
+            )
+
+
+        self.active_zones.clear()
+        self.zone_entry_ts.clear()
+
+   
+        self._flush_heatmap()
+        self.emitter.flush()

@@ -157,8 +157,8 @@ class CrossCameraReIDEngine:
 
     def __init__(
         self,
-        handover_window_seconds: float = 5.0,
-        similarity_threshold: float = 0.92,
+        handover_window_seconds: float = 20.0,
+        similarity_threshold: float = 0.87,
     ):
         self.handover_window = handover_window_seconds
         self.similarity_threshold = similarity_threshold
