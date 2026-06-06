@@ -138,48 +138,41 @@ FOH zones (Entrance, Cash Counter, Wall Units, Makeup Unit, Gondolas) are calibr
 ---
 
 ## Repository Structure
+```text
 store-intelligence/
-│
-├── app/
-│   ├── main.py
-│   ├── ingestion.py
-│   ├── metrics.py
-│   ├── funnel.py
-│   ├── anomalies.py
-│   ├── health.py
-│   └── models.py
-│
-├── pipeline/
-│   ├── detect.py
-│   ├── tracker.py
-│   ├── reid.py
-│   ├── zone_mapper.py
-│   ├── emit.py
-│   └── run.sh
-│
-├── data/
-│   ├── store_layout.json
-│   ├── pos_transactions.csv
-│   ├── store1.png
-│   ├── store2.png
-│   └── clips/
-│       ├── STORE_BLR_001/
-│       └── STORE_BLR_002/
-│
-├── tests/
-│   ├── test_api.py
-│   ├── test_metrics.py
-│   ├── test_funnel.py
-│   └── ...
-│
-├── dashboard.py
-├── run_pipeline.py
-├── Dockerfile
-├── docker-compose.yml
-├── requirements.txt
-├── .dockerignore
-├── .gitignore
-└── README.md
+├── app/                          # Core REST API Application Layer
+│   ├── __init__.py
+│   ├── main.py                   # FastAPI Application Entrypoint & Routers
+│   ├── ingestion.py              # Event Processing, De-duplication & Sessions
+│   ├── metrics.py                # Core Business Calculations (Footfall, Dwell)
+│   ├── funnel.py                 # 4-Stage Funnel State Computations
+│   ├── anomalies.py              # Real-Time Anomaly Detection Engine
+│   ├── health.py                 # Camera Feed Lag & Hardware Health Monitors
+│   └── models.py                 # Strict Pydantic Verification Schemas
+├── pipeline/                     # Computer Vision Processing Node
+│   ├── __init__.py
+│   ├── detect.py                 # YOLOv8n Inference Worker Execution
+│   ├── tracker.py                # ByteTrack Integration & Multi-Object Tracking
+│   ├── reid.py                   # Cross-Camera Structural Identity Matcher
+│   ├── zone_mapper.py            # Geometric Polygon Boundary Engine
+│   ├── emit.py                   # Async REST API Transaction Forwarder
+│   └── run.sh                    # Automation Script for Video Processing
+├── data/                         # Persistent Configuration & Assets
+│   ├── store_layout.json         # Master Floor-Plan Polygon Mapping Coordinates
+│   ├── pos_transactions.csv      # Local Point-Of-Sale Transaction Log Samples
+│   ├── store1.png                # Floor-Plan Layout — Indiranagar Store
+│   ├── store2.png                # Floor-Plan Layout — Brigade Road Store
+│   └── clips/                    # Target Video Files Storage Root
+├── tests/                        # Comprehensive Testing Core
+│   ├── __init__.py
+│   ├── test_api.py               # Functional Endpoint Test Matrix
+│   └── test_pipeline.py          # Vision Algorithm Suite Asserts
+├── dashboard.py                  # Streamlit Real-Time Analytical UI Front-End
+├── run_pipeline.py               # Top-Level Automation Core Engine
+├── Dockerfile                    # Multi-Stage System Docker Build Blueprint
+├── docker-compose.yml            # Application Services Orchestration Spec
+├── requirements.txt              # Standard Python Library Version Tree
+└── README.md                     # Deep System Blueprint Manual
 
 ---
 
