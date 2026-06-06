@@ -139,38 +139,47 @@ FOH zones (Entrance, Cash Counter, Wall Units, Makeup Unit, Gondolas) are calibr
 
 ## Repository Structure
 store-intelligence/
-app/
-    main.py           FastAPI app + route registration
-    ingestion.py      Event deduplication + session management
-    metrics.py        Footfall, dwell, conversion, queue metrics
-    funnel.py         4-stage visitor funnel
-    anomalies.py      Anomaly detection engine
-    health.py         Feed lag + health checks
-    models.py         Pydantic event + response models
-
-pipeline/
-    detect.py         YOLOv8n person detection
-    tracker.py        ByteTrack + cross-camera Re-ID
-    reid.py           Re-identification logic
-    zone_mapper.py    Polygon zone assignment
-    emit.py           Event emission to API
-    run.sh
-
-data/
-    store_layout.json Zone polygon definitions (normalised coords)
-    pos_transactions.csv
-    store1.png        Floor plan — Indiranagar
-    store2.png        Floor plan — Brigade Road
-    clips/            Place CCTV footage here
-
-tests/
-
-dashboard.py          Streamlit analytics UI
-run_pipeline.py       Pipeline entry point
-Dockerfile
-docker-compose.yml
-requirements.txt
-README.md
+│
+├── app/
+│   ├── main.py
+│   ├── ingestion.py
+│   ├── metrics.py
+│   ├── funnel.py
+│   ├── anomalies.py
+│   ├── health.py
+│   └── models.py
+│
+├── pipeline/
+│   ├── detect.py
+│   ├── tracker.py
+│   ├── reid.py
+│   ├── zone_mapper.py
+│   ├── emit.py
+│   └── run.sh
+│
+├── data/
+│   ├── store_layout.json
+│   ├── pos_transactions.csv
+│   ├── store1.png
+│   ├── store2.png
+│   └── clips/
+│       ├── STORE_BLR_001/
+│       └── STORE_BLR_002/
+│
+├── tests/
+│   ├── test_api.py
+│   ├── test_metrics.py
+│   ├── test_funnel.py
+│   └── ...
+│
+├── dashboard.py
+├── run_pipeline.py
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt
+├── .dockerignore
+├── .gitignore
+└── README.md
 
 ---
 
